@@ -12,4 +12,14 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.2.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\PerfectChannel.WebApi\PerfectChannel.WebApi.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="appsettings.test.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>
