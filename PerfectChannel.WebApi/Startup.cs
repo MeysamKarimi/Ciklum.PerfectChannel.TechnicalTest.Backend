@@ -1,8 +1,19 @@
+using AutoMapper;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
+using Microsoft.OpenApi.Models;
+using PerfectChannel.WebApi.Common;
+using PerfectChannel.WebApi.Data;
+using PerfectChannel.WebApi.Data.Interfaces;
+using PerfectChannel.WebApi.Repositories;
+using PerfectChannel.WebApi.Repositories.Interfaces;
+using PerfectChannel.WebApi.Services;
+using PerfectChannel.WebApi.Services.Interfaces;
+using PerfectChannel.WebApi.Settings;
 
 namespace PerfectChannel.WebApi
 {
@@ -19,7 +30,31 @@ namespace PerfectChannel.WebApi
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
-            
+
+            services.Configure<TaskDatabaseSettings>(Configuration.GetSection(nameof(TaskDatabaseSettings)));
+
+            services.AddSingleton<ITaskDatabaseSettings>(ts => ts.GetRequiredService<IOptions<TaskDatabaseSettings>>().Value);
+
+            services.AddTransient<ITaskContext, TaskContext>();
+
+            services.AddTransient<ITaskRepository, TaskRepository>();
+
+            services.AddTransient<ITaskService, TaskService>();
+
+
+            var mapperConfig = new MapperConfiguration(mc =>
+            {
+                mc.AddProfile(new MappingProfile());
+            });
+
+            IMapper mapper = mapperConfig.CreateMapper();
+            services.AddSingleton(mapper);
+
+            services.AddSwaggerGen(doc => {
+                doc.SwaggerDoc("v1", new OpenApiInfo { Title = "To-do list API", Version = "v1" });
+                doc.CustomSchemaIds(type => type.ToString());
+            });
+
             ConfigureCors(services);
         }
 
@@ -42,6 +77,11 @@ namespace PerfectChannel.WebApi
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
+            });
+
+            app.UseSwagger();
+            app.UseSwaggerUI(c => {
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "To-do list API v1");
             });
         }
 
