@@ -1,6 +1,4 @@
 ﻿using AutoMapper;
-using MongoDB.Driver;
-using PerfectChannel.WebApi.Data.Interfaces;
 using PerfectChannel.WebApi.Repositories.Interfaces;
 using PerfectChannel.WebApi.Services.Interfaces;
 using System;
@@ -42,6 +40,81 @@ namespace PerfectChannel.WebApi.Services
         {
             var tasks = await _repository.GetTaskByStatus(status);
             return _mapper.Map<IEnumerable<DTOs.Task>>(tasks);
+        }
+
+        public async Task<Common.Response> Create(DTOs.Task task)
+        {            
+            if (task == null || string.IsNullOrWhiteSpace(task.Title))
+            {
+                return new Common.Response()
+                {
+                    ResponseCode = (int)Common.ResponseCode.ErrorValidation,
+                    Data = "Invalid Input Task"
+                };                
+            }                
+
+            task.Status = Common.TaskStatus.Pending;
+            Data.Models.Task taskModel = _mapper.Map<Data.Models.Task>(task);
+            return await _repository.Create(taskModel);
+        }
+        public async Task<Common.Response> Update(DTOs.Task task)
+        {
+            if (task == null || string.IsNullOrWhiteSpace(task.Id) || string.IsNullOrWhiteSpace(task.Title))
+            {
+                return new Common.Response()
+                {
+                    ResponseCode = (int)Common.ResponseCode.ErrorValidation,
+                    Data = "Invalid Input Task"
+                };
+            }
+
+            Data.Models.Task taskModel = _mapper.Map<Data.Models.Task>(task);
+            try
+            {
+                await _repository.Update(taskModel);
+                return new Common.Response()
+                {
+                    ResponseCode = (int)Common.ResponseCode.Success,
+                    Data = "Task Updated"
+                };
+
+            }
+            catch (Exception exception)
+            {
+                return new Common.Response()
+                {
+                    ResponseCode = (int)Common.ResponseCode.ErrorValidation,
+                    Data = exception.Message
+                };
+            }
+        }
+        public async Task<Common.Response> Delete(string Id)
+        {
+            if (string.IsNullOrWhiteSpace(Id))
+            {
+                return new Common.Response()
+                {
+                    ResponseCode = (int)Common.ResponseCode.ErrorValidation,
+                    Data = "Invalid Input Task"
+                };
+            }
+            try
+            {
+                await _repository.Delete(Id);
+                return new Common.Response()
+                {
+                    ResponseCode = (int)Common.ResponseCode.Success,
+                    Data = "Task Deleted"
+                };
+            }
+            catch (Exception exception)
+            {
+                return new Common.Response()
+                {
+                    ResponseCode = (int)Common.ResponseCode.ErrorValidation,
+                    Data = exception.Message
+                };
+            }
         }
     }
 }

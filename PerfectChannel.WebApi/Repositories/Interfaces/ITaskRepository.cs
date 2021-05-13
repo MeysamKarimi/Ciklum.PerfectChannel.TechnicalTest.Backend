@@ -10,5 +10,8 @@ namespace PerfectChannel.WebApi.Repositories.Interfaces
         Task<Data.Models.Task> GetTask(string id);
         Task<IEnumerable<Data.Models.Task>> GetTaskByTitle(string title);
         Task<IEnumerable<Data.Models.Task>> GetTaskByStatus(Common.TaskStatus status);
+        Task<Common.Response> Create(Data.Models.Task task);
+        Task<bool> Update(Data.Models.Task task);
+        Task<bool> Delete(string Id);
     }
 }

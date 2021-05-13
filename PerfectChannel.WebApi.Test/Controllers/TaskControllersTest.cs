@@ -109,6 +109,103 @@ namespace PerfectChannel.WebApi.Test.Controllers
             return config.GetSection(nameof(TaskDatabaseSettings)).Get<TaskDatabaseSettings>();
         }
 
-    }
+        [TestCaseSource("WrongSetOfTasksToInsert")]
+        public async Task Insert_New_Task_Must_Be_Valid_Test(Services.DTOs.Task mockTask)
+        {
+            var task = await _mockTaskController.CreateTask(mockTask);
 
+            var badRequestResult = task.Result as BadRequestResult;
+            Assert.IsNotNull(badRequestResult);
+            Assert.AreEqual((int)HttpStatusCode.BadRequest, badRequestResult.StatusCode);
+        }
+
+        [TestCase(Common.TaskStatus.Pending)]
+        [TestCase(Common.TaskStatus.Completed)]
+        public async Task Insert_New_Task_Must_Have_been_Added_With_Pending_Status_Value_Test(Common.TaskStatus inputStatus)
+        {
+            var mockTask = new Services.DTOs.Task()
+            {
+                Title = "Mock Task",
+                Description = "Test Task Creation Action",
+                Status = inputStatus
+            };
+            var task = await _mockTaskController.CreateTask(mockTask);
+
+            var okResult = task.Result as CreatedAtRouteResult;
+            Assert.IsNotNull(okResult);
+            Assert.AreEqual((int)HttpStatusCode.Created, okResult.StatusCode);
+
+            Services.DTOs.Task createdTask = (Services.DTOs.Task)okResult.Value;
+            Assert.IsNotNull(createdTask.Id); //correctly inserted
+
+            Assert.AreEqual(createdTask.Status, Common.TaskStatus.Pending); // Should be added by pending status at first
+        }
+
+        [Test]
+        public async Task Update_Task_With_Correct_Input_Task()
+        {
+            var mockTask = new Services.DTOs.Task()
+            {
+                Id = "609aef52ebbf00e163722c04",
+                Title = "Mock Task Update",
+                Description = "Test Task Update Action",
+                Status = Common.TaskStatus.Completed
+            };
+            var task = await _mockTaskController.UpdateTask(mockTask);
+
+            var okResult = task as OkObjectResult;
+            Assert.IsNotNull(okResult);
+            Assert.AreEqual((int)HttpStatusCode.OK, okResult.StatusCode);
+        }
+
+
+        [TestCaseSource("WrongSetOfTasksToUpdate")]
+        public async Task Update_Task_Must_Be_Valid_Test(Services.DTOs.Task mockTask)
+        {
+
+            var task = await _mockTaskController.UpdateTask(mockTask);
+
+            var badRequestResult = task as BadRequestResult;
+            Assert.IsNotNull(badRequestResult);
+            Assert.AreEqual((int)HttpStatusCode.BadRequest, badRequestResult.StatusCode);
+        }
+
+        [TestCase("")]
+        [TestCase("    ")]
+        [TestCase(null)]
+        [TestCase("1dfdfd23")]
+        public async Task Delete_Task_Must_Not_Be_Called_By_Wrong_Id_Test(string Id)
+        {
+            var task = await _mockTaskController.DeleteTask(Id);
+
+            var badRequestResult = task as BadRequestResult;
+            Assert.IsNotNull(badRequestResult);
+            Assert.AreEqual((int)HttpStatusCode.BadRequest, badRequestResult.StatusCode);
+        }
+
+        private static IEnumerable<TestCaseData> WrongSetOfTasksToInsert
+        {
+            get
+            {
+                yield return new TestCaseData(null);
+                yield return new TestCaseData(new Services.DTOs.Task() { Title = string.Empty });
+                yield return new TestCaseData(new Services.DTOs.Task() { Title = "          " });
+            }
+        }
+
+        private static IEnumerable<TestCaseData> WrongSetOfTasksToUpdate
+        {
+            get
+            {
+                yield return new TestCaseData(null);
+                yield return new TestCaseData(new Services.DTOs.Task() { Id = string.Empty });
+                yield return new TestCaseData(new Services.DTOs.Task() { Id = "          " });
+                yield return new TestCaseData(new Services.DTOs.Task() { Id = "123" });
+                yield return new TestCaseData(new Services.DTOs.Task() { Id = "123456/r9101112" });
+                yield return new TestCaseData(new Services.DTOs.Task() { Title = null });
+                yield return new TestCaseData(new Services.DTOs.Task() { Title = string.Empty });
+                yield return new TestCaseData(new Services.DTOs.Task() { Title = "          " });
+            }
+        }
+    }
 }

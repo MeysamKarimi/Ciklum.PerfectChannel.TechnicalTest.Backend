@@ -51,6 +51,33 @@ namespace PerfectChannel.WebApi.Repositories
                             .Find(filter)
                             .ToListAsync();
         }
+
+        public async Task<Common.Response> Create(Data.Models.Task task)
+        {
+            await _context
+                    .Tasks
+                    .InsertOneAsync(task);
+            return new Common.Response()
+            {
+                ResponseCode = (int)Common.ResponseCode.Success,
+                Data = task.Id
+            };
+        }
+        public async Task<bool> Update(Data.Models.Task task)
+        {
+
+            var updateResult = await _context.Tasks.ReplaceOneAsync(filter: old => old.Id == task.Id, replacement: task);
+
+            return updateResult.IsAcknowledged
+                    && updateResult.ModifiedCount > 0;
+        }
+        public async Task<bool> Delete(string Id)
+        {
+            var deleteResult = await _context.Tasks.DeleteOneAsync(p => p.Id == Id);
+
+            return deleteResult.IsAcknowledged
+                    && deleteResult.DeletedCount > 0;
+        }
     }
 }
 
