@@ -50,13 +50,46 @@ namespace PerfectChannel.WebApi.Services
                 {
                     ResponseCode = (int)Common.ResponseCode.ErrorValidation,
                     Data = "Invalid Input Task"
-                };                
-            }                
+                };
+            }
 
             task.Status = Common.TaskStatus.Pending;
             Data.Models.Task taskModel = _mapper.Map<Data.Models.Task>(task);
             return await _repository.Create(taskModel);
         }
+
+
+        public async Task<Common.Response> ToggleTaskStatus(string Id)
+        {
+            if (string.IsNullOrWhiteSpace(Id))
+            {
+                return new Common.Response()
+                {
+                    ResponseCode = (int)Common.ResponseCode.ErrorValidation,
+                    Data = "Invalid Input Task"
+                };
+            }
+           
+            try
+            {
+                await _repository.ToggleTaskStatus(Id);
+                return new Common.Response()
+                {
+                    ResponseCode = (int)Common.ResponseCode.Success,
+                    Data = "Task Updated"
+                };
+
+            }
+            catch (Exception exception)
+            {
+                return new Common.Response()
+                {
+                    ResponseCode = (int)Common.ResponseCode.ErrorValidation,
+                    Data = exception.Message
+                };
+            }
+        }
+
         public async Task<Common.Response> Update(DTOs.Task task)
         {
             if (task == null || string.IsNullOrWhiteSpace(task.Id) || string.IsNullOrWhiteSpace(task.Title))

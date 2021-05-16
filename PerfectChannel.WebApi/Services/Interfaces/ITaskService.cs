@@ -11,6 +11,7 @@ namespace PerfectChannel.WebApi.Services.Interfaces
         Task<IEnumerable<DTOs.Task>> GetTaskByTitle(string title);
         Task<IEnumerable<DTOs.Task>> GetTaskByStatus(Common.TaskStatus status);
         Task<Common.Response> Create(DTOs.Task task);
+        Task<Common.Response> ToggleTaskStatus(string Id);
         Task<Common.Response> Update(DTOs.Task task);
         Task<Common.Response> Delete(string Id);
     }
