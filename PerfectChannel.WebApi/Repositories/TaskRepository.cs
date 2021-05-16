@@ -24,11 +24,11 @@ namespace PerfectChannel.WebApi.Repositories
                             .ToListAsync();
         }
 
-        public async Task<Data.Models.Task> GetTask(string id)
+        public async Task<Data.Models.Task> GetTask(string Id)
         {
             return await _context
                                 .Tasks
-                                .Find(p => p.Id == id)
+                                .Find(p => p.Id == Id)
                                 .FirstOrDefaultAsync();
         }
 
@@ -62,6 +62,16 @@ namespace PerfectChannel.WebApi.Repositories
                 ResponseCode = (int)Common.ResponseCode.Success,
                 Data = task.Id
             };
+        }
+
+        public async Task<bool> ToggleTaskStatus(string Id) 
+        {
+            Data.Models.Task taskToBeUpdated = await GetTask(Id);
+            taskToBeUpdated.Status = (taskToBeUpdated.Status == Common.TaskStatus.Pending) ? Common.TaskStatus.Completed : Common.TaskStatus.Pending;
+            var updateResult = await _context.Tasks.ReplaceOneAsync(filter: old => old.Id == Id, replacement: taskToBeUpdated);
+
+            return updateResult.IsAcknowledged
+                    && updateResult.ModifiedCount > 0;
         }
         public async Task<bool> Update(Data.Models.Task task)
         {

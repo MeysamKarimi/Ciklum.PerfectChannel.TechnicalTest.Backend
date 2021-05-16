@@ -1,6 +1,7 @@
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using NUnit.Framework;
 using PerfectChannel.WebApi.Common;
 using PerfectChannel.WebApi.Controllers;
@@ -26,7 +27,7 @@ namespace PerfectChannel.WebApi.Test.Controllers
         ITaskRepository _mockRepository;
         IMapper _mockMapper;
         ITaskService _mockService;
-        TaskController _mockTaskController;       
+        TaskController _mockTaskController;    
 
         [SetUp]
         public void Setup()
@@ -40,7 +41,11 @@ namespace PerfectChannel.WebApi.Test.Controllers
             _mockMapper = mappingConfig.CreateMapper();
 
             _mockService = new TaskService(_mockRepository, _mockMapper);
-            _mockTaskController = new TaskController(_mockService);
+
+            using var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+            var _mocklogger = loggerFactory.CreateLogger<TaskController>();
+
+            _mockTaskController = new TaskController(_mockService, _mocklogger);
         }
 
         [Test]
@@ -158,6 +163,18 @@ namespace PerfectChannel.WebApi.Test.Controllers
             Assert.AreEqual((int)HttpStatusCode.OK, okResult.StatusCode);
         }
 
+        [TestCase("")]
+        [TestCase("    ")]
+        [TestCase(null)]
+        [TestCase("1dfdf\nd23")]
+        public async Task Toggle_Task_Status_Needs_A_Valid_Id_Test(string Id)
+        {
+            var task = await _mockTaskController.ToggleTaskStatus(Id);
+
+            var badRequestResult = task as BadRequestResult;
+            Assert.IsNotNull(badRequestResult);
+            Assert.AreEqual((int)HttpStatusCode.BadRequest, badRequestResult.StatusCode);
+        }
 
         [TestCaseSource("WrongSetOfTasksToUpdate")]
         public async Task Update_Task_Must_Be_Valid_Test(Services.DTOs.Task mockTask)
